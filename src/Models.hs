@@ -13,20 +13,21 @@
 
 module Models where
 
-import           Control.Monad.Reader
+import           Control.Monad.Reader (MonadIO, MonadReader, asks, liftIO)
 import           Data.Aeson           (FromJSON, ToJSON)
-import           Database.Persist.Sql
+import           Database.Persist.Sql (SqlPersistT, runMigration, runSqlPool)
 import           Database.Persist.TH  (mkMigrate, mkPersist, persistLowerCase,
                                        share, sqlSettings)
 import           GHC.Generics         (Generic)
 
-import           Config
+import           Config               (Config, configPool)
+import           Data.Text            (Text)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User json
-    name String
-    email String
-    deriving Show
+    name Text
+    email Text
+    deriving Show Eq
 |]
 
 doMigrations :: SqlPersistT IO ()
@@ -34,5 +35,5 @@ doMigrations = runMigration migrateAll
 
 runDb :: (MonadReader Config m, MonadIO m) => SqlPersistT IO b -> m b
 runDb query = do
-    pool <- asks getPool
+    pool <- asks configPool
     liftIO $ runSqlPool query pool

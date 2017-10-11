@@ -21,15 +21,20 @@ executable perservant
     main-is:
         Main.hs
     build-depends:
-        base >=4.7 && <4.9
-      , servant-persistent 
+        base >= 4.9 && < 5.0
+      , servant-persistent
       , persistent-postgresql
       , wai
       , warp
       , monad-logger
       , safe
+      , monad-metrics
+      , wai-middleware-metrics
+      , microlens
+      , ekg
+      , ekg-core
     hs-source-dirs:
-        app   
+        app
     default-language:
         Haskell2010
 
@@ -43,8 +48,9 @@ library
       , Models
       , Api
       , Api.User
-    build-depends: 
-        base >= 4.7 && < 4.9
+      , Logger
+    build-depends:
+        base >= 4.9 && < 5.0
       , aeson
       , bytestring
       , monad-control
@@ -53,14 +59,22 @@ library
       , persistent
       , persistent-postgresql
       , persistent-template
-      , servant >= 0.7 && < 0.8
-      , servant-js >= 0.7 && < 0.8
-      , servant-server >= 0.7 && < 0.8
+      , servant >= 0.11 && < 0.12
+      , servant-js >= 0.9 && < 0.10
+      , servant-server >= 0.11 && < 0.12
       , transformers
       , wai
       , wai-extra
       , warp
-
+      , text
+      , monad-metrics
+      , ekg
+      , wai-middleware-metrics
+      , microlens
+      , containers
+      , ekg-core
+      , katip >= 0.5.0.2 && < 0.6
+      , fast-logger
 
 test-suite servant-persistent-test
     type:
@@ -71,11 +85,20 @@ test-suite servant-persistent-test
         Spec.hs
     other-modules:
         ApiSpec
+        UserDbSpec
     build-depends:
         base
+      , persistent
+      , persistent-postgresql
       , servant-persistent
+      , servant >= 0.11 && < 0.12
+      , servant-server >= 0.11 && < 0.12
       , QuickCheck
       , hspec
+      , mtl
+      , transformers
+      , text
+      , monad-metrics
     ghc-options:
         -threaded -rtsopts -with-rtsopts=-N
     default-language:
