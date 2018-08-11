@@ -2,17 +2,20 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Config where
 
+import           Control.Concurrent                   (ThreadId)
 import           Control.Exception                    (throwIO)
 import           Control.Monad.Except                 (ExceptT, MonadError)
 import           Control.Monad.IO.Class
-import           Control.Monad.Logger                 (MonadLogger (..),
-                                                       toLogStr)
+import           Control.Monad.Logger                 (MonadLogger (..))
 import           Control.Monad.Metrics                (Metrics, MonadMetrics,
                                                        getMetrics)
 import           Control.Monad.Reader                 (MonadIO, MonadReader,
-                                                       ReaderT, ask, asks)
+                                                       ReaderT, asks)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Maybe            (MaybeT (..), runMaybeT)
 import qualified Data.ByteString.Char8                as BS
@@ -21,6 +24,7 @@ import           Database.Persist.Postgresql          (ConnectionPool,
                                                        ConnectionString,
                                                        createPostgresqlPool)
 import           Network.Wai                          (Middleware)
+import           Network.Wai.Handler.Warp             (Port)
 import           Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import           Servant                              (ServantErr)
 import           System.Environment                   (lookupEnv)
@@ -37,8 +41,10 @@ import           Logger
 newtype AppT m a
     = AppT
     { runApp :: ReaderT Config (ExceptT ServantErr m) a
-    } deriving ( Functor, Applicative, Monad, MonadReader Config,
-                 MonadError ServantErr, MonadIO)
+    } deriving
+    ( Functor, Applicative, Monad, MonadReader Config, MonadError ServantErr
+    , MonadIO
+    )
 
 type App = AppT IO
 
@@ -46,10 +52,12 @@ type App = AppT IO
 -- running in and a Persistent 'ConnectionPool'.
 data Config
     = Config
-    { configPool    :: ConnectionPool
-    , configEnv     :: Environment
-    , configMetrics :: Metrics
-    , configLogEnv  :: LogEnv
+    { configPool      :: ConnectionPool
+    , configEnv       :: Environment
+    , configMetrics   :: Metrics
+    , configEkgServer :: ThreadId
+    , configLogEnv    :: LogEnv
+    , configPort      :: Port
     }
 
 instance Monad m => MonadMetrics (AppT m) where
